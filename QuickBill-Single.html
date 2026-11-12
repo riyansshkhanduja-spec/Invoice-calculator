@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>QuickBill Invoice Maker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+      background: #f3f6f5;
+      color: #202124;
+      padding: 16px 12px;
+      line-height: 1.4;
+    }
+    .layout { max-width: 980px; margin: 0 auto; }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .eyebrow {
+      color: #188038;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      margin-bottom: 4px;
+    }
+    h1 { font-size: 28px; margin-bottom: 4px; }
+    .page-header p { color: #687080; font-size: 14px; }
+
+    button {
+      border: none;
+      background: #188038;
+      color: white;
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:active { background: #0f5a24; }
+
+    .invoice-card {
+      background: white;
+      border: 1px solid #e0e7e3;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(24,60,37,0.08);
+    }
+    .details-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      color: #505968;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d8dedb;
+      border-radius: 8px;
+      font-size: 16px;
+      color: #202124;
+      background: #fff;
+    }
+    input:focus {
+      outline: none;
+      border-color: #188038;
+      box-shadow: 0 0 0 3px rgba(24,128,56,0.15);
+    }
+    h2 { font-size: 18px; margin-bottom: 12px; }
+
+    .item-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    /* BIG GREEN BUTTON - always full width on phone/tablet */
+    .add-btn {
+      width: 100%;
+      padding: 18px;
+      font-size: 18px;
+      background: #188038;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      margin-top: 6px;
+      font-weight: 700;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 460px;
+    }
+    th, td {
+      padding: 12px 8px;
+      text-align: left;
+      border-bottom: 1px solid #e9eeeb;
+      font-size: 14px;
+    }
+    th {
+      background: #f6faf7;
+      color: #5f6b64;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .empty {
+      text-align: center !important;
+      color: #7b847f;
+      padding: 24px 12px;
+    }
+    .delete-btn {
+      background: #fce8e6;
+      color: #b3261e;
+      padding: 8px 12px;
+      font-size: 13px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    .totals {
+      margin-top: 20px;
+      max-width: 300px;
+      margin-left: auto;
+    }
+    .totals div {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      color: #5f6b64;
+      font-size: 15px;
+    }
+    .totals strong { color: #202124; }
+    .totals .grand {
+      border-top: 2px solid #dce5df;
+      margin-top: 6px;
+      padding-top: 12px;
+      font-size: 17px;
+      color: #202124;
+    }
+    .totals .grand strong {
+      color: #188038;
+      font-size: 20px;
+    }
+
+    .message {
+      margin-top: 16px;
+      color: #687080;
+      font-size: 14px;
+      min-height: 20px;
+    }
+    footer {
+      text-align: center;
+      margin: 20px 0 10px;
+      color: #687080;
+      font-size: 13px;
+    }
+
+    @media (min-width: 640px) {
+      body { padding: 24px 16px; }
+      .details-grid { grid-template-columns: 2fr 1fr 1fr; }
+      .item-form {
+        display: grid;
+        grid-template-columns: 2fr 0.8fr 1fr auto;
+        align-items: end;
+        gap: 12px;
+      }
+      .add-btn {
+        width: auto;
+        margin-top: 0;
+        padding: 12px 20px;
+        font-size: 16px;
+      }
+      .invoice-card { padding: 24px; }
+    }
+
+    @media print {
+      @page { size: A4; margin: 14mm; }
+      body { background: white; padding: 0; }
+      .page-header button, .item-form, .no-print, footer, .message { display: none !important; }
+      .invoice-card { border: none; box-shadow: none; padding: 0; }
+      input { border: none; padding: 2px 0; }
+      th { background: #eee !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="layout">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">SIMPLE BILLING TOOL</p>
+        <h1>QuickBill</h1>
+        <p>Create an invoice and print a clean receipt.</p>
+      </div>
+      <button id="printBtn" type="button">Print invoice</button>
+    </header>
+
+    <section class="invoice-card">
+      <div class="details-grid">
+        <label>
+          Customer name
+          <input id="customerName" type="text" placeholder="Enter customer name">
+        </label>
+        <label>
+          Invoice date
+          <input id="invoiceDate" type="date">
+        </label>
+        <label>
+          Invoice number
+          <input id="invoiceNumber" type="text" readonly>
+        </label>
+      </div>
+
+      <h2>Add an item</h2>
+      <form id="itemForm" class="item-form">
+        <label>
+          Item name
+          <input id="itemName" type="text" placeholder="e.g. Notebook" required>
+        </label>
+        <label>
+          Quantity
+          <input id="quantity" type="number" min="1" step="1" value="1" required>
+        </label>
+        <label>
+          Unit price (₹)
+          <input id="unitPrice" type="number" min="0.01" step="0.01" placeholder="0.00" required>
+        </label>
+
+        <!-- Big green button -->
+        <button type="submit" class="add-btn">+ Add item</button>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Qty</th>
+              <th>Unit price</th>
+              <th>Total</th>
+              <th class="no-print">Action</th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody">
+            <tr>
+              <td colspan="5" class="empty">No items added yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <section class="totals">
+        <div>
+          <span>Subtotal</span>
+          <strong id="subtotal">₹0.00</strong>
+        </div>
+        <div>
+          <span>GST (18%)</span>
+          <strong id="tax">₹0.00</strong>
+        </div>
+        <div class="grand">
+          <span>Grand total</span>
+          <strong id="grandTotal">₹0.00</strong>
+        </div>
+      </section>
+
+      <p id="message" class="message">Add your first item to begin.</p>
+    </section>
+
+    <footer>QuickBill • Thank you for your business.</footer>
+  </main>
+
+  <script>
+    // Data
+    const items = [];
+    let nextId = 1;
+
+    function formatMoney(value) {
+      const num = Number(value);
+      if (isNaN(num)) return "₹0.00";
+      return "₹" + num.toFixed(2);
+    }
+
+    // Set date and invoice number
+    document.getElementById("invoiceDate").value = new Date().toISOString().slice(0, 10);
+    document.getElementById("invoiceNumber").value = "QB-" + Date.now().toString().slice(-6);
+
+    // Update totals
+    function updateTotals() {
+      let subtotal = 0;
+      for (let i = 0; i < items.length; i++) {
+        subtotal += Number(items[i].quantity) * Number(items[i].price);
+      }
+      const tax = subtotal * 0.18;
+      const grandTotal = subtotal + tax;
+
+      document.getElementById("subtotal").textContent = formatMoney(subtotal);
+      document.getElementById("tax").textContent = formatMoney(tax);
+      document.getElementById("grandTotal").textContent = formatMoney(grandTotal);
+    }
+
+    // Draw table
+    function renderTable() {
+      const tbody = document.getElementById("itemsBody");
+
+      if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">No items added yet.</td></tr>';
+        updateTotals();
+        return;
+      }
+
+      let html = "";
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const lineTotal = Number(item.quantity) * Number(item.price);
+
+        html += "<tr>" +
+          "<td>" + item.name + "</td>" +
+          "<td>" + item.quantity + "</td>" +
+          "<td>" + formatMoney(item.price) + "</td>" +
+          "<td>" + formatMoney(lineTotal) + "</td>" +
+          '<td class="no-print"><button type="button" class="delete-btn" data-id="' + item.id + '">Delete</button></td>' +
+          "</tr>";
+      }
+
+      tbody.innerHTML = html;
+      updateTotals();
+    }
+
+    // Add item
+    function addItem() {
+      const nameInput = document.getElementById("itemName");
+      const qtyInput = document.getElementById("quantity");
+      const priceInput = document.getElementById("unitPrice");
+      const message = document.getElementById("message");
+
+      const name = nameInput.value.trim();
+      const quantity = parseInt(qtyInput.value, 10);
+      const price = parseFloat(priceInput.value);
+
+      if (name === "" || isNaN(quantity) || quantity < 1 || isNaN(price) || price <= 0) {
+        message.textContent = "Please enter item name, quantity and price.";
+        return;
+      }
+
+      items.push({
+        id: nextId,
+        name: name,
+        quantity: quantity,
+        price: price
+      });
+      nextId++;
+
+      // Clear form
+      nameInput.value = "";
+      qtyInput.value = "1";
+      priceInput.value = "";
+      nameInput.focus();
+
+      renderTable();
+      message.textContent = "Item added successfully!";
+    }
+
+    // Form submit
+    document.getElementById("itemForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      addItem();
+    });
+
+    // Delete
+    document.getElementById("itemsBody").addEventListener("click", function (e) {
+      if (!e.target.classList.contains("delete-btn")) return;
+
+      const id = parseInt(e.target.getAttribute("data-id"), 10);
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].id === id) {
+          items.splice(i, 1);
+          break;
+        }
+      }
+      renderTable();
+      document.getElementById("message").textContent = "Item removed.";
+    });
+
+    // Print
+    document.getElementById("printBtn").addEventListener("click", function () {
+      const customer = document.getElementById("customerName").value.trim();
+      const message = document.getElementById("message");
+
+      if (customer === "") {
+        message.textContent = "Please enter customer name before printing.";
+        document.getElementById("customerName").focus();
+        return;
+      }
+      if (items.length === 0) {
+        message.textContent = "Add at least one item before printing.";
+        return;
+      }
+      window.print();
+    });
+
+    // Start
+    renderTable();
+  </script>
+</body>
+</html>
